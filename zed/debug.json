@@ -6,9 +6,10 @@
     "label": "DDEV: Listen for Xdebug",
     "adapter": "Xdebug",
     "request": "launch",
+    "hostname": "0.0.0.0",
     "port": 9003,
     "pathMappings": {
-      "/var/www/html": "__DDEV_APPROOT__"
+      "/var/www/html": "$ZED_WORKTREE_ROOT"
     }
   }
 ]

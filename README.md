@@ -10,7 +10,7 @@ Zed editor integration for DDEV projects: tasks for everyday `ddev` commands and
 ddev add-on get maxwebgr/ddev-zed
 ```
 
-Opt in to the DDEV MCP server for Zed's Agent Panel (creates `.zed/settings.json` only if it doesn't exist):
+To also connect Zed's Agent Panel to DDEV, opt in to the MCP server (see [DDEV MCP server](#ddev-mcp-server-optional)):
 
 ```bash
 DDEV_ZED_MCP=true ddev add-on get maxwebgr/ddev-zed
@@ -21,10 +21,27 @@ DDEV_ZED_MCP=true ddev add-on get maxwebgr/ddev-zed
 | File | Purpose |
 |---|---|
 | `.zed/tasks.json` | start, stop, restart, describe, launch, mailpit, ssh, logs, xdebug toggle/diagnose, composer install, snapshot |
-| `.zed/debug.json` | "DDEV: Listen for Xdebug" on port 9003, `/var/www/html` mapped to the project root |
-| `.zed/settings.json` | optional `ddev-mcp` context server |
+| `.zed/debug.json` | "DDEV: Listen for Xdebug" on port 9003, `/var/www/html` mapped to `$ZED_WORKTREE_ROOT` |
+| `.zed/settings.json` | optional: registers the [`ddev-mcp`](https://www.npmjs.com/package/ddev-mcp) context server for the Agent Panel (only with `DDEV_ZED_MCP=true`) |
 
 Canonical copies live in `.ddev/zed/`.
+
+## DDEV MCP server (optional)
+
+Setting `DDEV_ZED_MCP=true` during install writes `.zed/settings.json` with a `context_servers` entry that runs [`ddev-mcp`](https://www.npmjs.com/package/ddev-mcp) ([source](https://github.com/codingsasi/ddev-mcp)) via `npx -y ddev-mcp`. Nothing is installed at that moment: `npx` downloads the package the first time Zed starts the server, so Node.js 20+ must be available on your `PATH`.
+
+`ddev-mcp` is a [Model Context Protocol](https://modelcontextprotocol.io/) server that exposes DDEV as tools. Once Zed loads it, the Agent Panel can:
+
+- start, stop, restart the project and read `ddev describe` output
+- read container logs
+- import, export and snapshot the database
+- run any command inside the web container through `ddev_exec` (composer, drush, wp-cli, artisan, phpunit, ...)
+
+so you can ask the agent things like "restart ddev and run the migrations" instead of switching to a terminal. The server runs commands in the project the Agent Panel is open in.
+
+Tool calls are subject to the Agent Panel's normal confirmation flow. `ddev-mcp` also blocks commands it classifies as dangerous (for example destructive Platform.sh or database operations) unless `ALLOW_DANGEROUS_COMMANDS=true` is set in the server's `env` block in `.zed/settings.json`.
+
+If `.zed/settings.json` already exists and has no `#ddev-generated` marker, the add-on leaves it alone and prints a message. Copy the `context_servers` block from `.ddev/zed/settings.json` into your file manually. If you skip the opt-in, `.zed/settings.json` is not created and the Agent Panel is unaffected.
 
 ## Ownership
 
@@ -36,7 +53,7 @@ Files containing `#ddev-generated` belong to the add-on and are updated on reins
 2. Run the `ddev: xdebug toggle` task.
 3. Load the page.
 
-`pathMappings` uses the absolute project path (written at install time) because `$ZED_WORKTREE_ROOT` does not resolve reliably there. If you move the project, re-run `ddev add-on get`.
+The listener binds to `0.0.0.0:9003` so the web container can reach it, and maps `/var/www/html` to `$ZED_WORKTREE_ROOT`, the [task variable](https://zed.dev/docs/tasks#variables) Zed resolves to the project root. If breakpoints don't trigger, see the [FAQ](FAQ.md): the usual causes are a host firewall blocking port 9003 or, rarely, the variable not resolving.
 
 ## Keybindings
 
@@ -54,6 +71,10 @@ Zed's `keymap.json` is global, so the add-on doesn't touch it. Example:
   }
 ]
 ```
+
+## FAQ
+
+See [FAQ.md](FAQ.md) for firewall setup, path mapping fallbacks, and merging into user-owned files.
 
 ## Remove
 

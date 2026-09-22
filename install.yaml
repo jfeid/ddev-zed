@@ -28,12 +28,6 @@ post_install_actions:
       cp "$src" "$dst"
       echo "Installed .zed/$f"
     done
-  - |
-    #ddev-description:Write absolute project path into .zed/debug.json pathMappings
-    dst="${DDEV_APPROOT}/.zed/debug.json"
-    if [ -f "$dst" ] && grep -q '__DDEV_APPROOT__' "$dst"; then
-      APPROOT="${DDEV_APPROOT}" perl -pi -e 's/__DDEV_APPROOT__/$ENV{APPROOT}/g' "$dst"
-    fi
 
 # Files under .ddev/zed/ are removed automatically; these handle .zed/.
 removal_actions:

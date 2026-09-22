@@ -47,10 +47,8 @@ health_checks() {
   done
   # MCP settings are opt-in only
   assert_file_not_exist "${TESTDIR}/.zed/settings.json"
-  # pathMappings placeholder was replaced with the real project root
-  run grep -q '__DDEV_APPROOT__' "${TESTDIR}/.zed/debug.json"
-  assert_failure
-  run grep -qF "${TESTDIR}" "${TESTDIR}/.zed/debug.json"
+  # pathMappings uses Zed's worktree variable, resolved by Zed at debug time
+  run grep -qF '"/var/www/html": "$ZED_WORKTREE_ROOT"' "${TESTDIR}/.zed/debug.json"
   assert_success
 }
 
