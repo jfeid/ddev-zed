@@ -38,6 +38,37 @@ If you hit this, take ownership of `.zed/debug.json` (delete the `#ddev-generate
 
 Remember to update it if you move the project. Restarting Zed also clears the #44140 case.
 
+## Where are the tasks? They're not in the Command Palette
+
+The Command Palette lists actions, not tasks. Open the task picker with `task: spawn` (`alt-shift-t` by default) and type `ddev` to filter. To bind a task to a key, add a `task::Spawn` entry with a `task_name` to your global `keymap.json`; see the README for an example.
+
+## How do I know the MCP server is running?
+
+Open Zed's settings (`agent: open settings` or Settings, then AI, then MCP Servers). `ddev-mcp` should be listed with a green dot. A red dot means the server failed to start, usually because `npx` isn't on the `PATH` Zed sees, or because Node.js is older than 20.
+
+If the server isn't listed at all:
+
+- Zed only reads project-level `context_servers` when a single folder is open. With several folders in the workspace they are ignored ([#51951](https://github.com/zed-industries/zed/issues/51951)). Open the project on its own.
+- Reload the workspace after editing `.zed/settings.json`.
+
+## The Agent Panel says "No model selected"
+
+Zed's free plan doesn't ship a model for the built-in agent. Options:
+
+- **Claude Code in Zed.** Click `+` in the Agent Panel and choose "New Claude Code Thread". It signs in with your Anthropic account. Zed forwards `ddev-mcp` to it.
+- **Your own API key.** Configure Providers, add an Anthropic, OpenAI, or Google key, then pick a model. Billed per token.
+- **Ollama.** Run a local tool-capable model such as `qwen2.5-coder`; Zed detects it automatically.
+
+For the built-in agent, also make sure the active profile allows tools. "Ask" mode never calls MCP tools.
+
+## Is the agent actually using ddev-mcp?
+
+A call through the server shows up in the thread as a tool card named after the tool, for example `ddev_describe` on `ddev-mcp`. Output with no tool card, or a mention of a shell or sandbox, means the agent ran `ddev` itself through its terminal tool instead.
+
+With Claude Code in Zed, `/mcp` in the thread only prints a count of connected servers. To check by name, ask: "List your connected MCP servers and whether you have a tool called ddev_describe." If `ddev-mcp` is missing, start a new thread after the project has fully loaded; Zed can fail to forward servers to a thread created too early ([#64611](https://github.com/zed-industries/zed/issues/64611)).
+
+Claude Code has its own shell and may prefer it over the MCP tools. Asking it to "use the ddev-mcp tools instead of the shell" works. One advantage of the server there: it runs outside Claude Code's command sandbox, so it doesn't need a sandbox bypass to reach the Docker socket.
+
 ## The add-on skipped one of my files
 
 Any file in `.zed/` without the `#ddev-generated` marker is yours. The add-on won't overwrite or remove it. The canonical templates are always in `.ddev/zed/`; open the matching file there and copy the entries you want into your own file.

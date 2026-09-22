@@ -39,6 +39,8 @@ Setting `DDEV_ZED_MCP=true` during install writes `.zed/settings.json` with a `c
 
 so you can ask the agent things like "restart ddev and run the migrations" instead of switching to a terminal. The server runs commands in the project the Agent Panel is open in.
 
+This works with Zed's built-in agent and with external agents such as Claude Code running inside Zed. Zed forwards its configured context servers to external agents, so a Claude Code thread started from the Agent Panel sees the same `ddev_*` tools. The built-in agent needs a model first: Zed's free plan doesn't include one, so add an API key under Configure Providers, use a local Ollama model, or use an external agent with its own account.
+
 Tool calls are subject to the Agent Panel's normal confirmation flow. `ddev-mcp` also blocks commands it classifies as dangerous (for example destructive Platform.sh or database operations) unless `ALLOW_DANGEROUS_COMMANDS=true` is set in the server's `env` block in `.zed/settings.json`.
 
 If `.zed/settings.json` already exists and has no `#ddev-generated` marker, the add-on leaves it alone and prints a message. Copy the `context_servers` block from `.ddev/zed/settings.json` into your file manually. If you skip the opt-in, `.zed/settings.json` is not created and the Agent Panel is unaffected.
