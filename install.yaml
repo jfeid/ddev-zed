@@ -1,5 +1,6 @@
 # ddev-zed: Zed editor integration for DDEV projects.
 # Copies Zed config templates into .ddev/zed/, then installs them into .zed/.
+# Also adds a `ddev zed` host command that opens the project in Zed.
 # Files without '#ddev-generated' are treated as user-owned and never overwritten or removed.
 
 name: zed
@@ -8,6 +9,7 @@ project_files:
   - zed/tasks.json
   - zed/debug.json
   - zed/settings.json
+  - commands/host/zed
 
 ddev_version_constraint: '>= v1.25.4'
 

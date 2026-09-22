@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#ddev-generated
+## Description: Open the project in Zed
+## Usage: zed [zed options]
+## Example: "ddev zed"
+## Example: "ddev zed -n" (open in a new window)
+
+for bin in zed zeditor; do
+  if command -v "$bin" >/dev/null 2>&1; then
+    exec "$bin" "$@" "${DDEV_APPROOT}"
+  fi
+done
+
+if command -v flatpak >/dev/null 2>&1 && flatpak info dev.zed.Zed >/dev/null 2>&1; then
+  exec flatpak run dev.zed.Zed "$@" "${DDEV_APPROOT}"
+fi
+
+echo "Zed CLI not found. Run 'zed: install cli' inside Zed, or see https://zed.dev/docs/linux" >&2
+exit 1

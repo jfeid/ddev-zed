@@ -2,7 +2,7 @@
 
 # DDEV Zed
 
-Zed editor integration for DDEV projects: tasks for everyday `ddev` commands and a ready-to-use Xdebug listener.
+Zed editor integration for DDEV projects: tasks for everyday `ddev` commands, a ready-to-use Xdebug listener, and a `ddev zed` command to open the project.
 
 ## Install
 
@@ -22,6 +22,7 @@ DDEV_ZED_MCP=true ddev add-on get maxwebgr/ddev-zed
 |---|---|
 | `.zed/tasks.json` | start, stop, restart, describe, launch, mailpit, ssh, logs, xdebug toggle/diagnose, composer install, snapshot |
 | `.zed/debug.json` | "DDEV: Listen for Xdebug" on port 9003, `/var/www/html` mapped to `$ZED_WORKTREE_ROOT` |
+| `.ddev/commands/host/zed` | `ddev zed` opens the project in Zed; extra arguments are passed through, e.g. `ddev zed -n` for a new window |
 | `.zed/settings.json` | optional: registers the [`ddev-mcp`](https://www.npmjs.com/package/ddev-mcp) context server for the Agent Panel (only with `DDEV_ZED_MCP=true`) |
 
 Canonical copies live in `.ddev/zed/`.

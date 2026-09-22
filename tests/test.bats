@@ -47,6 +47,8 @@ health_checks() {
   done
   # MCP settings are opt-in only
   assert_file_not_exist "${TESTDIR}/.zed/settings.json"
+  # `ddev zed` host command is installed and executable
+  assert_file_executable "${TESTDIR}/.ddev/commands/host/zed"
   # pathMappings uses Zed's worktree variable, resolved by Zed at debug time
   run grep -qF '"/var/www/html": "$ZED_WORKTREE_ROOT"' "${TESTDIR}/.zed/debug.json"
   assert_success
@@ -106,6 +108,19 @@ teardown() {
   assert_output --partial 'Not found in your .zed/tasks.json: "ddev: stop", "ddev: restart"'
   refute_output --partial '"ddev: start"'
   assert_output --partial 'Not found in your .zed/settings.json: "ddev-mcp" context server'
+}
+
+@test "ddev zed opens the project root" {
+  set -eu -o pipefail
+  run ddev add-on get "${DIR}"
+  assert_success
+  # Stub the zed CLI so the test never launches an editor
+  mkdir -p "${TESTDIR}/bin"
+  printf '#!/usr/bin/env bash\necho "zed-stub: $*"\n' > "${TESTDIR}/bin/zed"
+  chmod +x "${TESTDIR}/bin/zed"
+  PATH="${TESTDIR}/bin:${PATH}" run ddev zed -n
+  assert_success
+  assert_output --partial "zed-stub: -n ${TESTDIR}"
 }
 
 @test "opt-in MCP settings" {
