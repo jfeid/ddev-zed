@@ -1,0 +1,6 @@
+# Zed editor settings for developing this repo (the add-on ships its own templates in zed/)
+.zed/
+
+# AI assistant local config
+.claude/
+.codex/

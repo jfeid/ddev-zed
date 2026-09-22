@@ -1,4 +1,4 @@
-[![tests](https://github.com/YOUR_GITHUB_USER/ddev-zed/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/YOUR_GITHUB_USER/ddev-zed/actions/workflows/tests.yml?query=branch%3Amain)
+[![tests](https://github.com/maxwebgr/ddev-zed/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/maxwebgr/ddev-zed/actions/workflows/tests.yml?query=branch%3Amain)
 
 # DDEV Zed
 
@@ -7,13 +7,13 @@ Zed editor integration for DDEV projects: tasks for everyday `ddev` commands and
 ## Install
 
 ```bash
-ddev add-on get YOUR_GITHUB_USER/ddev-zed
+ddev add-on get maxwebgr/ddev-zed
 ```
 
 Opt in to the DDEV MCP server for Zed's Agent Panel (creates `.zed/settings.json` only if it doesn't exist):
 
 ```bash
-DDEV_ZED_MCP=true ddev add-on get YOUR_GITHUB_USER/ddev-zed
+DDEV_ZED_MCP=true ddev add-on get maxwebgr/ddev-zed
 ```
 
 ## What it installs
@@ -61,4 +61,4 @@ Zed's `keymap.json` is global, so the add-on doesn't touch it. Example:
 ddev add-on remove zed
 ```
 
-**Contributed and maintained by [@YOUR_GITHUB_USER](https://github.com/YOUR_GITHUB_USER)**
+**Contributed and maintained by [@maxwebgr](https://github.com/maxwebgr)**
