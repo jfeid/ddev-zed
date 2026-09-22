@@ -1,0 +1,12 @@
+// #ddev-generated
+// Installed by ddev-zed only when DDEV_ZED_MCP=true was set during `ddev add-on get`.
+{
+  "context_servers": {
+    "ddev-mcp": {
+      "source": "custom",
+      "command": "npx",
+      "args": ["-y", "ddev-mcp"],
+      "env": {}
+    }
+  }
+}

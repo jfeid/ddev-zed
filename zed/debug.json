@@ -1,0 +1,14 @@
+// #ddev-generated
+// Installed by ddev-zed. Remove the line above to stop DDEV from updating this file.
+// Start this listener, then run `ddev xdebug on` (or the "ddev: xdebug toggle" task).
+[
+  {
+    "label": "DDEV: Listen for Xdebug",
+    "adapter": "Xdebug",
+    "request": "launch",
+    "port": 9003,
+    "pathMappings": {
+      "/var/www/html": "__DDEV_APPROOT__"
+    }
+  }
+]

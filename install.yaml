@@ -1,0 +1,52 @@
+# ddev-zed: Zed editor integration for DDEV projects.
+# Copies Zed config templates into .ddev/zed/, then installs them into .zed/.
+# Files without '#ddev-generated' are treated as user-owned and never overwritten or removed.
+
+name: zed
+
+project_files:
+  - zed/tasks.json
+  - zed/debug.json
+  - zed/settings.json
+
+ddev_version_constraint: '>= v1.25.4'
+
+# Run in the project's .ddev directory, on the host.
+post_install_actions:
+  - |
+    #ddev-description:Install Zed tasks and debug config into .zed/
+    mkdir -p "${DDEV_APPROOT}/.zed"
+    files="tasks.json debug.json"
+    if [ "${DDEV_ZED_MCP:-}" = "true" ]; then files="$files settings.json"; fi
+    for f in $files; do
+      src="${DDEV_APPROOT}/.ddev/zed/$f"
+      dst="${DDEV_APPROOT}/.zed/$f"
+      if [ -f "$dst" ] && ! grep -q '#ddev-generated' "$dst"; then
+        echo "Skipped .zed/$f: it exists and is user-owned. Merge manually from .ddev/zed/$f"
+        continue
+      fi
+      cp "$src" "$dst"
+      echo "Installed .zed/$f"
+    done
+  - |
+    #ddev-description:Write absolute project path into .zed/debug.json pathMappings
+    dst="${DDEV_APPROOT}/.zed/debug.json"
+    if [ -f "$dst" ] && grep -q '__DDEV_APPROOT__' "$dst"; then
+      APPROOT="${DDEV_APPROOT}" perl -pi -e 's/__DDEV_APPROOT__/$ENV{APPROOT}/g' "$dst"
+    fi
+
+# Files under .ddev/zed/ are removed automatically; these handle .zed/.
+removal_actions:
+  - |
+    #ddev-description:Remove ddev-zed generated files from .zed/
+    for f in tasks.json debug.json settings.json; do
+      dst="${DDEV_APPROOT}/.zed/$f"
+      if [ -f "$dst" ]; then
+        if grep -q '#ddev-generated' "$dst"; then
+          rm -f "$dst"
+        else
+          echo "Kept .zed/$f: user-owned (no #ddev-generated)"
+        fi
+      fi
+    done
+    rmdir "${DDEV_APPROOT}/.zed" 2>/dev/null || true

@@ -1,0 +1,17 @@
+// #ddev-generated
+// Installed by ddev-zed. Remove the line above to stop DDEV from updating this file.
+// Run tasks with `task: spawn` (alt-shift-t); bind them in your global keymap.json.
+[
+  { "label": "ddev: start", "command": "ddev", "args": ["start"], "cwd": "$ZED_WORKTREE_ROOT", "hide": "on_success" },
+  { "label": "ddev: stop", "command": "ddev", "args": ["stop"], "cwd": "$ZED_WORKTREE_ROOT", "hide": "on_success" },
+  { "label": "ddev: restart", "command": "ddev", "args": ["restart"], "cwd": "$ZED_WORKTREE_ROOT", "hide": "on_success" },
+  { "label": "ddev: describe", "command": "ddev", "args": ["describe"], "cwd": "$ZED_WORKTREE_ROOT" },
+  { "label": "ddev: launch", "command": "ddev", "args": ["launch"], "cwd": "$ZED_WORKTREE_ROOT", "reveal": "never", "hide": "always" },
+  { "label": "ddev: mailpit", "command": "ddev", "args": ["mailpit"], "cwd": "$ZED_WORKTREE_ROOT", "reveal": "never", "hide": "always" },
+  { "label": "ddev: ssh", "command": "ddev", "args": ["ssh"], "cwd": "$ZED_WORKTREE_ROOT", "use_new_terminal": true, "allow_concurrent_runs": true },
+  { "label": "ddev: logs -f", "command": "ddev", "args": ["logs", "-f"], "cwd": "$ZED_WORKTREE_ROOT", "use_new_terminal": true },
+  { "label": "ddev: xdebug toggle", "command": "ddev", "args": ["xdebug", "toggle"], "cwd": "$ZED_WORKTREE_ROOT", "hide": "on_success" },
+  { "label": "ddev: xdebug diagnose", "command": "ddev", "args": ["utility", "xdebug-diagnose"], "cwd": "$ZED_WORKTREE_ROOT" },
+  { "label": "ddev: composer install", "command": "ddev", "args": ["composer", "install"], "cwd": "$ZED_WORKTREE_ROOT" },
+  { "label": "ddev: snapshot", "command": "ddev", "args": ["snapshot"], "cwd": "$ZED_WORKTREE_ROOT" }
+]
