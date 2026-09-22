@@ -23,6 +23,18 @@ post_install_actions:
       dst="${DDEV_APPROOT}/.zed/$f"
       if [ -f "$dst" ] && ! grep -q '#ddev-generated' "$dst"; then
         echo "Skipped .zed/$f: it exists and is user-owned. Merge manually from .ddev/zed/$f"
+        # Read-only hint: list template entries the user's file doesn't have yet.
+        missing=""
+        if [ "$f" = "settings.json" ]; then
+          grep -q '"ddev-mcp"' "$dst" || missing='"ddev-mcp" context server'
+        else
+          while IFS= read -r label; do
+            grep -qF "\"$label\"" "$dst" || missing="${missing:+$missing, }\"$label\""
+          done < <(grep -o '"label": *"[^"]*"' "$src" | sed 's/^"label": *"//; s/"$//')
+        fi
+        if [ -n "$missing" ]; then
+          echo "  Not found in your .zed/$f: $missing"
+        fi
         continue
       fi
       cp "$src" "$dst"

@@ -42,6 +42,15 @@ Remember to update it if you move the project. Restarting Zed also clears the #4
 
 Any file in `.zed/` without the `#ddev-generated` marker is yours. The add-on won't overwrite or remove it. The canonical templates are always in `.ddev/zed/`; open the matching file there and copy the entries you want into your own file.
 
+The skip message tells you what's missing, for example:
+
+```
+Skipped .zed/tasks.json: it exists and is user-owned. Merge manually from .ddev/zed/tasks.json
+  Not found in your .zed/tasks.json: "ddev: snapshot", "ddev: xdebug diagnose"
+```
+
+The check is a plain text search for each template label, so a task you renamed will show up as missing. The add-on never writes into a user-owned file, even additively: Zed's files are JSONC with comments, and there is no portable way to merge into them without losing those comments or breaking `ddev add-on remove`.
+
 To hand a file back to the add-on, delete it and re-run `ddev add-on get maxwebgr/ddev-zed`.
 
 ## I moved or renamed the project

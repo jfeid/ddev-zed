@@ -45,7 +45,7 @@ If `.zed/settings.json` already exists and has no `#ddev-generated` marker, the 
 
 ## Ownership
 
-Files containing `#ddev-generated` belong to the add-on and are updated on reinstall. Delete that line to take ownership; the add-on will then skip the file on install and keep it on removal.
+Files containing `#ddev-generated` belong to the add-on and are updated on reinstall. Delete that line to take ownership; the add-on will then skip the file on install and keep it on removal. When it skips a file, it lists the template entries your file doesn't have (task and debug labels, or the `ddev-mcp` server) so you can merge them by hand from `.ddev/zed/`.
 
 ## Debugging
 
