@@ -75,6 +75,15 @@ Zed's `keymap.json` is global, so the add-on doesn't touch it. Example:
 ]
 ```
 
+## Windows
+
+Untested so far, but nothing in the add-on is Linux-specific. Two setups:
+
+- **WSL2 (recommended by DDEV).** Install and run everything inside WSL. Open the project from Zed for Windows with "Open Remote" and pick your WSL distro; tasks, terminals and the debugger then run on the WSL side where `ddev` lives. `ddev zed` from a WSL shell finds Zed's Windows CLI as `zed.exe` through WSL interop, provided Zed's install directory is on the Windows `PATH`.
+- **Traditional Windows with Docker Desktop.** DDEV runs the installer and `ddev zed` through Git Bash, so Git for Windows is required. Xdebug reaches the listener through `host.docker.internal`; Windows Defender Firewall must allow inbound TCP 9003, see the [FAQ](FAQ.md#1-host-firewall).
+
+Reports from real Windows installs are welcome in the issue tracker.
+
 ## FAQ
 
 See [FAQ.md](FAQ.md) for firewall setup, path mapping fallbacks, and merging into user-owned files.

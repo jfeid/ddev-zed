@@ -5,7 +5,8 @@
 ## Example: "ddev zed"
 ## Example: "ddev zed -n" (open in a new window)
 
-for bin in zed zeditor; do
+# zed: official CLI; zeditor: some Linux distro packages; zed.exe: Windows CLI via WSL interop
+for bin in zed zeditor zed.exe; do
   if command -v "$bin" >/dev/null 2>&1; then
     exec "$bin" "$@" "${DDEV_APPROOT}"
   fi
