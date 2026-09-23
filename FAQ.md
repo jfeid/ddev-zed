@@ -82,7 +82,7 @@ Skipped .zed/tasks.json: it exists and is user-owned. Merge manually from .ddev/
 
 The check is a plain text search for each template label, so a task you renamed will show up as missing. The add-on never writes into a user-owned file, even additively: Zed's files are JSONC with comments, and there is no portable way to merge into them without losing those comments or breaking `ddev add-on remove`.
 
-To hand a file back to the add-on, delete it and re-run `ddev add-on get maxwebgr/ddev-zed`.
+To hand a file back to the add-on, delete it and re-run `ddev add-on get jfeid/ddev-zed`.
 
 ## I moved or renamed the project
 

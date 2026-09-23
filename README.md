@@ -1,4 +1,4 @@
-[![tests](https://github.com/maxwebgr/ddev-zed/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/maxwebgr/ddev-zed/actions/workflows/tests.yml?query=branch%3Amain)
+[![tests](https://github.com/jfeid/ddev-zed/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/jfeid/ddev-zed/actions/workflows/tests.yml?query=branch%3Amain)
 
 # DDEV Zed
 
@@ -7,13 +7,13 @@ Zed editor integration for DDEV projects: tasks for everyday `ddev` commands, a 
 ## Install
 
 ```bash
-ddev add-on get maxwebgr/ddev-zed
+ddev add-on get jfeid/ddev-zed
 ```
 
 To also connect Zed's Agent Panel to DDEV, opt in to the MCP server (see [DDEV MCP server](#ddev-mcp-server-optional)):
 
 ```bash
-DDEV_ZED_MCP=true ddev add-on get maxwebgr/ddev-zed
+DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed
 ```
 
 ## What it installs
@@ -85,4 +85,4 @@ See [FAQ.md](FAQ.md) for firewall setup, path mapping fallbacks, and merging int
 ddev add-on remove zed
 ```
 
-**Contributed and maintained by [@maxwebgr](https://github.com/maxwebgr)**
+**Contributed and maintained by [@jfeid](https://github.com/jfeid)**
