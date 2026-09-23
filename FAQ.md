@@ -71,7 +71,7 @@ What was verified on Windows 11 with Zed 1.21 (September 2026):
 - Raising `"debugger": { "timeout": 20000 }` in Zed settings only makes it wait longer.
 - The same adapter runs fine when started by hand in WSL, and the same `debug.json` works when Zed opens a Windows-local folder.
 
-This matches open Zed issues for debuggers over remotes: [#46137](https://github.com/zed-industries/zed/issues/46137) (WSL) and [#57021](https://github.com/zed-industries/zed/issues/57021) (devcontainers). Follow those for a fix. Everything else in the add-on works over WSL; only the debug session is affected.
+Reported with this evidence as Zed issue [#64673](https://github.com/zed-industries/zed/issues/64673); related open reports are [#46137](https://github.com/zed-industries/zed/issues/46137) (WSL, Python) and [#57021](https://github.com/zed-industries/zed/issues/57021) (devcontainers). Follow those for a fix. Everything else in the add-on works over WSL; only the debug session is affected.
 
 ## Where are the tasks? They're not in the Command Palette
 
