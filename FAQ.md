@@ -14,13 +14,13 @@ sudo ufw allow from 172.16.0.0/12 to any port 9003 proto tcp comment 'xdebug fro
 
 `172.16.0.0/12` covers Docker's default bridge ranges. Use `docker network inspect ddev_default` to confirm the subnet on your machine, or `sudo ufw allow 9003/tcp` if you don't need to scope it.
 
-On Windows with Docker Desktop, the container connects through `host.docker.internal`. Allow the port in an elevated PowerShell:
+On Windows with Docker Desktop, the container connects through `host.docker.internal`. The first time the listener starts, Windows Defender Firewall prompts to allow Node.js (the debug adapter); click Allow. If the prompt was dismissed, add the rule in an elevated PowerShell:
 
 ```powershell
 New-NetFirewallRule -DisplayName "Xdebug from Docker" -Direction Inbound -Protocol TCP -LocalPort 9003 -Action Allow
 ```
 
-Under WSL2 the listener runs inside WSL and no Windows firewall rule is needed.
+Under WSL2 the listener would run inside WSL and no Windows firewall rule is needed, but the listener currently fails to start there for a different reason; see below.
 
 ### 2. Xdebug is off
 
@@ -45,6 +45,33 @@ If you hit this, take ownership of `.zed/debug.json` (delete the `#ddev-generate
 ```
 
 Remember to update it if you move the project. Restarting Zed also clears the #44140 case.
+
+## The debug picker shows "No matches"
+
+Zed only lists debug configs whose adapter is registered. The Xdebug adapter comes from Zed's PHP extension, so install it (`zed: extensions`, search "PHP") and reopen the picker. The status bar shows "PHP" instead of "Unknown" for `.php` files once it's active.
+
+## Language server phpactor: `env: 'php': No such file or directory`
+
+Harmless for debugging, but noisy. The PHP extension's default language server, phpactor, needs a `php` binary on the machine running Zed (inside WSL, when the project is open through WSL). DDEV projects typically have PHP only in the container. Either switch the project to intelephense, which runs on Node that Zed downloads itself:
+
+```json
+{ "languages": { "PHP": { "language_servers": ["intelephense", "!phpactor"] } } }
+```
+
+in `.zed/settings.json`, or install PHP on the host (`sudo apt install php-cli`, and `php-mbstring` for phpactor).
+
+## The debugger fails with "Connection to TCP DAP timeout" (WSL2)
+
+Symptom: the project is open through Zed's WSL remote, "DDEV: Listen for Xdebug" shows a red dot, and the console prints `error: Connection to TCP DAP timeout 127.0.0.1:<port>`. Xdebug, DDEV and the firewall are not involved; the failure happens before Zed talks to the adapter at all.
+
+What was verified on Windows 11 with Zed 1.21 (September 2026):
+
+- Zed downloads the adapter (vscode-php-debug) to `~/.local/share/zed/remote_extensions/work/php/Xdebug/` in WSL and logs "Loaded debug adapter: Xdebug" on the remote.
+- Zed's log then shows `Debug adapter has connected to TCP server 127.0.0.1:<port>` followed by the timeout. The DAP log (`debugger: open dap logs`) stays empty, so not even `initialize` was sent.
+- Raising `"debugger": { "timeout": 20000 }` in Zed settings only makes it wait longer.
+- The same adapter runs fine when started by hand in WSL, and the same `debug.json` works when Zed opens a Windows-local folder.
+
+This matches open Zed issues for debuggers over remotes: [#46137](https://github.com/zed-industries/zed/issues/46137) (WSL) and [#57021](https://github.com/zed-industries/zed/issues/57021) (devcontainers). Follow those for a fix. Everything else in the add-on works over WSL; only the debug session is affected.
 
 ## Where are the tasks? They're not in the Command Palette
 
@@ -97,7 +124,7 @@ To hand a file back to the add-on, delete it and re-run `ddev add-on get jfeid/d
 The command looks for `zed`, then `zeditor` (some Linux distro packages), then `zed.exe` (Windows CLI from inside WSL), then the Flatpak. Fixes by platform:
 
 - **Linux, macOS:** run `zed: install cli` from Zed's command palette, which links the CLI into `~/.local/bin` or `/usr/local/bin`.
-- **WSL2:** Zed for Windows must be on the Windows `PATH` so WSL interop exposes `zed.exe`. Check with `which zed.exe` in the WSL shell. If it's missing, add Zed's install directory to the Windows user `PATH` and restart the WSL shell.
+- **WSL2:** Zed's Windows installer offers to add `%LOCALAPPDATA%\Programs\Zed\bin` to the user `PATH` (checked by default). That directory holds both `zed.exe` and a WSL-aware `zed` shell wrapper, and WSL interop exposes both, so `which zed` in the WSL shell should print a `/mnt/c/...` path. If it prints nothing, the box was unchecked: add the directory to the Windows user `PATH` and open a new WSL shell.
 - **Traditional Windows:** the command runs in Git Bash, which resolves `zed` to `zed.exe` when it's on `PATH`.
 
 ## I moved or renamed the project

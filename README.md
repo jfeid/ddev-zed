@@ -16,6 +16,18 @@ To also connect Zed's Agent Panel to DDEV, opt in to the MCP server (see [DDEV M
 DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed
 ```
 
+## Requirements
+
+- DDEV v1.25.4 or newer.
+- Zed with the **PHP** extension. The extension provides the Xdebug debug adapter; without it the debug picker shows "No matches" for the add-on's config. Its default language server, phpactor, needs `php` on the machine running Zed. DDEV projects usually have PHP only in the container, so either switch the project to intelephense in `.zed/settings.json`:
+
+  ```json
+  { "languages": { "PHP": { "language_servers": ["intelephense", "!phpactor"] } } }
+  ```
+
+  or install a host PHP (`sudo apt install php-cli`).
+- Node.js 20+ on the machine running Zed, only if you opt in to the MCP server.
+
 ## What it installs
 
 | File | Purpose |
@@ -77,12 +89,17 @@ Zed's `keymap.json` is global, so the add-on doesn't touch it. Example:
 
 ## Windows
 
-Untested so far, but nothing in the add-on is Linux-specific. Two setups:
+Tested on Windows 11 with Zed 1.21 and DDEV v1.25.4 (September 2026).
 
-- **WSL2 (recommended by DDEV).** Install and run everything inside WSL. Open the project from Zed for Windows with "Open Remote" and pick your WSL distro; tasks, terminals and the debugger then run on the WSL side where `ddev` lives. `ddev zed` from a WSL shell finds Zed's Windows CLI as `zed.exe` through WSL interop, provided Zed's install directory is on the Windows `PATH`.
-- **Traditional Windows with Docker Desktop.** DDEV runs the installer and `ddev zed` through Git Bash, so Git for Windows is required. Xdebug reaches the listener through `host.docker.internal`; Windows Defender Firewall must allow inbound TCP 9003, see the [FAQ](FAQ.md#1-host-firewall).
+**WSL2 (recommended by DDEV).** Install and run DDEV inside WSL. Open the project from Zed for Windows with "Open Remote" and pick your WSL distro, or run `ddev zed` from the WSL shell: Zed's installer puts a WSL-aware `zed` wrapper on the Windows `PATH`, which WSL interop exposes. Zed asks you to trust the project on first open. What works:
 
-Reports from real Windows installs are welcome in the issue tracker.
+- `ddev zed` and `ddev zed -n`.
+- Tasks. They run in a WSL shell, so `ddev` is found without any PATH changes.
+- The MCP server (untested on Windows, expected to work since it runs on the WSL side).
+
+What doesn't: **the Xdebug listener fails to start** with "Connection to TCP DAP timeout". The add-on's `debug.json` is not the cause. Zed's remote debugger transport for WSL never completes the DAP handshake with the adapter, which Zed downloads and runs correctly on the WSL side. See the [FAQ](FAQ.md#the-debugger-fails-with-connection-to-tcp-dap-timeout-wsl2) for the diagnosis and the upstream issues to follow.
+
+**Traditional Windows with Docker Desktop.** DDEV runs the installer and `ddev zed` through Git Bash, so Git for Windows is required. The Xdebug listener starts (verified) and Windows Defender Firewall asks to allow Node.js the first time; click Allow. The installer itself and a full breakpoint round-trip have not been verified on this setup yet.
 
 ## FAQ
 
