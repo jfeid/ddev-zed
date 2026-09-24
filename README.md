@@ -54,7 +54,7 @@ When the add-on is installed from inside WSL, it writes a different command: `ws
 
 so you can ask the agent things like "restart ddev and run the migrations" instead of switching to a terminal. The server runs commands in the project the Agent Panel is open in.
 
-This works with Zed's built-in agent and with external agents such as Claude Code running inside Zed. Zed forwards its configured context servers to external agents, so a Claude Code thread started from the Agent Panel sees the same `ddev_*` tools. Exception: for projects opened through WSL, Zed did not forward the server to a Claude Agent thread in testing (Zed 1.21); the built-in agent sees it. The built-in agent needs a model first: Zed's free plan doesn't include one, so add an API key under Configure Providers, use a local Ollama model, or use an external agent with its own account.
+This works with Zed's built-in agent and with external agents such as Claude Code running inside Zed. Zed forwards its configured context servers to external agents, so a Claude Code thread started from the Agent Panel sees the same `ddev_*` tools. Exception: for projects opened through WSL, Zed doesn't forward the server to Claude Agent threads; the built-in agent sees it. The [FAQ](FAQ.md#is-the-agent-actually-using-ddev-mcp) has a one-file workaround for Claude Agent. The built-in agent needs a model first: Zed's free plan doesn't include one, so add an API key under Configure Providers, use a local Ollama model, or use an external agent with its own account.
 
 Tool calls are subject to the Agent Panel's normal confirmation flow. `ddev-mcp` also blocks commands it classifies as dangerous (for example destructive Platform.sh or database operations) unless `ALLOW_DANGEROUS_COMMANDS=true` is set in the server's `env` block in `.zed/settings.json`.
 
@@ -97,7 +97,7 @@ Tested on Windows 11 with Zed 1.21 and DDEV v1.25.4 (September 2026).
 
 - `ddev zed` and `ddev zed -n`.
 - Tasks. They run in a WSL shell, so `ddev` is found without any PATH changes.
-- The MCP server, through the `wsl.exe` entry the installer writes under WSL. Zed's built-in agent lists its tools; Claude Agent threads don't receive it over WSL (see [DDEV MCP server](#ddev-mcp-server-optional)).
+- The MCP server, through the `wsl.exe` entry the installer writes under WSL. Zed's built-in agent lists its tools; Claude Agent threads need a project `.mcp.json` over WSL (see [DDEV MCP server](#ddev-mcp-server-optional)).
 - Xdebug, **after one WSL setting**. Out of the box the listener fails with "Connection to TCP DAP timeout", a Zed bug in how it reaches debug adapters inside WSL. Disabling IPv6 in WSL works around it: breakpoints then hit normally. See the [FAQ](FAQ.md#the-debugger-fails-with-connection-to-tcp-dap-timeout-wsl2) for the setting and its trade-off.
 
 **Traditional Windows with Docker Desktop.** DDEV runs the installer and `ddev zed` through Git Bash, so Git for Windows is required. The Xdebug listener starts (verified) and Windows Defender Firewall asks to allow Node.js the first time; click Allow. The installer itself and a full breakpoint round-trip have not been verified on this setup yet.

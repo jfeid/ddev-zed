@@ -123,7 +123,13 @@ A call through the server shows up in the thread as a tool card named after the 
 
 With Claude Code in Zed, `/mcp` in the thread only prints a count of connected servers. To check by name, ask: "List your connected MCP servers and whether you have a tool called ddev_describe." If `ddev-mcp` is missing, start a new thread after the project has fully loaded; Zed can fail to forward servers to a thread created too early ([#64611](https://github.com/zed-industries/zed/issues/64611)).
 
-For projects opened through WSL, a fresh Claude Agent thread still didn't receive `ddev-mcp` in testing (Windows 11, Zed 1.21), while Zed's built-in agent listed its tools. Until Zed forwards project servers there, use the built-in agent for DDEV tools, or register the server in Claude's own MCP configuration (not tested).
+For projects opened through WSL, Zed doesn't forward `ddev-mcp` to Claude Agent threads, even fresh ones (Windows 11, Zed 1.21). Zed starts the server on the Windows side, while the Claude Agent runs inside WSL. Zed's built-in agent is unaffected. To give Claude Agent the tools, register the server in Claude's own project config, `.mcp.json` in the project root, with the plain `npx` form since the agent runs inside WSL:
+
+```json
+{ "mcpServers": { "ddev-mcp": { "command": "npx", "args": ["-y", "ddev-mcp"] } } }
+```
+
+Start a new Claude Agent thread and approve the project server when asked. Verified: the thread then calls `ddev_describe` through `ddev-mcp`. If no approval prompt appears and the tools are missing, pre-approve it in `.claude/settings.local.json` with `{ "enabledMcpjsonServers": ["ddev-mcp"] }`.
 
 ## ddev-mcp shows "Context server request timeout" (WSL)
 
