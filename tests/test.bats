@@ -125,7 +125,22 @@ teardown() {
 
 @test "opt-in MCP settings" {
   set -eu -o pipefail
-  DDEV_ZED_MCP=true run ddev add-on get "${DIR}"
+  run env -u WSL_DISTRO_NAME DDEV_ZED_MCP=true ddev add-on get "${DIR}"
   assert_success
   assert_file_exist "${TESTDIR}/.zed/settings.json"
+  run grep -F '"command": "npx"' "${TESTDIR}/.zed/settings.json"
+  assert_success
+}
+
+@test "opt-in MCP settings under WSL launch ddev-mcp through wsl.exe" {
+  set -eu -o pipefail
+  run env WSL_DISTRO_NAME=TestDistro DDEV_ZED_MCP=true ddev add-on get "${DIR}"
+  assert_success
+  assert_output --partial "WSL: ddev-mcp runs in distro TestDistro via wsl.exe"
+  run grep -q '#ddev-generated' "${TESTDIR}/.zed/settings.json"
+  assert_success
+  run grep -F '"command": "wsl.exe"' "${TESTDIR}/.zed/settings.json"
+  assert_success
+  run grep -F "\"args\": [\"-d\", \"TestDistro\", \"--cd\", \"${TESTDIR}\", \"npx\", \"-y\", \"ddev-mcp\"]" "${TESTDIR}/.zed/settings.json"
+  assert_success
 }

@@ -79,7 +79,7 @@ Add the following, or add only the second line if a `[wsl2]` section already exi
 kernelCommandLine=ipv6.disable=1
 ```
 
-Save as `.wslconfig` exactly (choose "All Files" in the save dialog so Notepad doesn't add `.txt`), then restart WSL and your project:
+Save as `.wslconfig` exactly (choose "All Files" in the save dialog so Notepad doesn't add `.txt`), then restart WSL and your project. Make sure no `apt` run is in progress in WSL first: `wsl --shutdown` interrupts it and leaves packages half-configured (`sudo apt --fix-broken install` repairs that).
 
 ```powershell
 wsl --shutdown
@@ -115,13 +115,19 @@ Zed's free plan doesn't ship a model for the built-in agent. Options:
 - **Your own API key.** Configure Providers, add an Anthropic, OpenAI, or Google key, then pick a model. Billed per token.
 - **Ollama.** Run a local tool-capable model such as `qwen2.5-coder`; Zed detects it automatically.
 
-For the built-in agent, also make sure the active profile allows tools. "Ask" mode never calls MCP tools.
+For the built-in agent, also make sure the active profile has the `ddev-mcp` tools switched on: open the profile selector next to the model picker and configure its MCP tools.
 
 ## Is the agent actually using ddev-mcp?
 
 A call through the server shows up in the thread as a tool card named after the tool, for example `ddev_describe` on `ddev-mcp`. Output with no tool card, or a mention of a shell or sandbox, means the agent ran `ddev` itself through its terminal tool instead.
 
 With Claude Code in Zed, `/mcp` in the thread only prints a count of connected servers. To check by name, ask: "List your connected MCP servers and whether you have a tool called ddev_describe." If `ddev-mcp` is missing, start a new thread after the project has fully loaded; Zed can fail to forward servers to a thread created too early ([#64611](https://github.com/zed-industries/zed/issues/64611)).
+
+For projects opened through WSL, a fresh Claude Agent thread still didn't receive `ddev-mcp` in testing (Windows 11, Zed 1.21), while Zed's built-in agent listed its tools. Until Zed forwards project servers there, use the built-in agent for DDEV tools, or register the server in Claude's own MCP configuration (not tested).
+
+## ddev-mcp shows "Context server request timeout" (WSL)
+
+The entry in `.zed/settings.json` runs `npx -y ddev-mcp` directly. Zed for Windows starts MCP servers on Windows even when the project is open through WSL, so `npx` isn't found and Zed reports a timeout after 60 seconds. The add-on writes a `wsl.exe` entry instead when it's installed from inside WSL; a plain `npx` entry means it was installed from elsewhere or the file predates that change. Re-run `DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed` from the WSL shell. Also check that `npx` exists inside WSL: on Ubuntu, `sudo apt install nodejs npm`.
 
 Claude Code has its own shell and may prefer it over the MCP tools. Asking it to "use the ddev-mcp tools instead of the shell" works. One advantage of the server there: it runs outside Claude Code's command sandbox, so it doesn't need a sandbox bypass to reach the Docker socket.
 
