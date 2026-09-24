@@ -20,7 +20,7 @@ On Windows with Docker Desktop, the container connects through `host.docker.inte
 New-NetFirewallRule -DisplayName "Xdebug from Docker" -Direction Inbound -Protocol TCP -LocalPort 9003 -Action Allow
 ```
 
-Under WSL2 the listener would run inside WSL and no Windows firewall rule is needed, but the listener currently fails to start there for a different reason; see below.
+Under WSL2 the listener runs inside WSL and no Windows firewall rule is needed. If it fails to start there, see the WSL2 timeout entry below.
 
 ### 2. Xdebug is off
 
@@ -62,16 +62,37 @@ in `.zed/settings.json`, or install PHP on the host (`sudo apt install php-cli`,
 
 ## The debugger fails with "Connection to TCP DAP timeout" (WSL2)
 
-Symptom: the project is open through Zed's WSL remote, "DDEV: Listen for Xdebug" shows a red dot, and the console prints `error: Connection to TCP DAP timeout 127.0.0.1:<port>`. Xdebug, DDEV and the firewall are not involved; the failure happens before Zed talks to the adapter at all.
+Symptom: the project is open through Zed's WSL remote, "DDEV: Listen for Xdebug" shows a red dot, and the console prints `error: Connection to TCP DAP timeout 127.0.0.1:<port>`. Xdebug, DDEV and the firewall are not involved. The failure happens before Zed talks to the adapter at all: Zed's log shows `Debug adapter has connected to TCP server 127.0.0.1:<port>` followed by the timeout, and the DAP log (`debugger: open dap logs`) stays empty. Raising `debugger.timeout` in Zed settings only makes it wait longer.
 
-What was verified on Windows 11 with Zed 1.21 (September 2026):
+The likely cause is IPv6. Inside WSL the adapter listens on both IPv4 and IPv6, but WSL's localhost relay only forwards it to Windows over IPv6 (`::1`), while Zed connects to `127.0.0.1`. The Zed issue to follow is [#46137](https://github.com/zed-industries/zed/issues/46137).
 
-- Zed downloads the adapter (vscode-php-debug) to `~/.local/share/zed/remote_extensions/work/php/Xdebug/` in WSL and logs "Loaded debug adapter: Xdebug" on the remote.
-- Zed's log then shows `Debug adapter has connected to TCP server 127.0.0.1:<port>` followed by the timeout. The DAP log (`debugger: open dap logs`) stays empty, so not even `initialize` was sent.
-- Raising `"debugger": { "timeout": 20000 }` in Zed settings only makes it wait longer.
-- The same adapter runs fine when started by hand in WSL, and the same `debug.json` works when Zed opens a Windows-local folder.
+**Workaround:** disable IPv6 inside WSL. In PowerShell, open the WSL config file:
 
-Reported with this evidence as Zed issue [#64673](https://github.com/zed-industries/zed/issues/64673); related open reports are [#46137](https://github.com/zed-industries/zed/issues/46137) (WSL, Python) and [#57021](https://github.com/zed-industries/zed/issues/57021) (devcontainers). Follow those for a fix. Everything else in the add-on works over WSL; only the debug session is affected.
+```powershell
+notepad "$env:USERPROFILE\.wslconfig"
+```
+
+Add the following, or add only the second line if a `[wsl2]` section already exists. If a `kernelCommandLine` line exists, append `ipv6.disable=1` to it with a space instead.
+
+```ini
+[wsl2]
+kernelCommandLine=ipv6.disable=1
+```
+
+Save as `.wslconfig` exactly (choose "All Files" in the save dialog so Notepad doesn't add `.txt`), then restart WSL and your project:
+
+```powershell
+wsl --shutdown
+```
+
+```bash
+cat /proc/cmdline | grep -o ipv6.disable=1   # confirms the setting
+cd ~/path/to/project && ddev start
+```
+
+Reopen the project in Zed and start the listener. Verified on Windows 11 with Zed 1.21 and DDEV v1.25.4 (September 2026): the listener connects and breakpoints hit.
+
+This turns IPv6 off for everything in every WSL distro. Nothing in DDEV needs it, but if another tool of yours does, revert by removing the line and running `wsl --shutdown` again.
 
 ## Where are the tasks? They're not in the Command Palette
 

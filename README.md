@@ -26,7 +26,7 @@ DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed
   ```
 
   or install a host PHP (`sudo apt install php-cli`).
-- Node.js 20+ on the machine running Zed, only if you opt in to the MCP server.
+- Node.js 20+ with npm on the machine running Zed, only if you opt in to the MCP server. On Ubuntu that means `sudo apt install nodejs npm`, since the `nodejs` package alone has no `npx`.
 
 ## What it installs
 
@@ -96,8 +96,7 @@ Tested on Windows 11 with Zed 1.21 and DDEV v1.25.4 (September 2026).
 - `ddev zed` and `ddev zed -n`.
 - Tasks. They run in a WSL shell, so `ddev` is found without any PATH changes.
 - The MCP server (untested on Windows, expected to work since it runs on the WSL side).
-
-What doesn't: **the Xdebug listener fails to start** with "Connection to TCP DAP timeout". The add-on's `debug.json` is not the cause. Zed's remote debugger transport for WSL never completes the DAP handshake with the adapter, which Zed downloads and runs correctly on the WSL side. See the [FAQ](FAQ.md#the-debugger-fails-with-connection-to-tcp-dap-timeout-wsl2) for the diagnosis and the upstream issues to follow.
+- Xdebug, **after one WSL setting**. Out of the box the listener fails with "Connection to TCP DAP timeout", a Zed bug in how it reaches debug adapters inside WSL. Disabling IPv6 in WSL works around it: breakpoints then hit normally. See the [FAQ](FAQ.md#the-debugger-fails-with-connection-to-tcp-dap-timeout-wsl2) for the setting and its trade-off.
 
 **Traditional Windows with Docker Desktop.** DDEV runs the installer and `ddev zed` through Git Bash, so Git for Windows is required. The Xdebug listener starts (verified) and Windows Defender Firewall asks to allow Node.js the first time; click Allow. The installer itself and a full breakpoint round-trip have not been verified on this setup yet.
 
