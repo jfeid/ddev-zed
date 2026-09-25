@@ -72,9 +72,11 @@ post_install_actions:
             # Traditional Windows: ddev-mcp takes its project folder from PWD and, when PWD
             # is unset (Zed started from the Start menu), crashes calling the Unix pwd command.
             # Pin PWD to the project root so it starts and runs ddev in the right folder.
-            winroot="$DDEV_APPROOT"
-            if command -v cygpath >/dev/null 2>&1; then winroot="$(cygpath -w "$DDEV_APPROOT")"; fi
-            root="$(esc "$winroot")"
+            # Use forward slashes (cygpath -m): DDEV passes this script to Git Bash in a way
+            # that halves doubled backslashes, so no escaping with backslashes here. Windows
+            # paths can't contain double quotes, so the value is JSON-safe as is.
+            root="$DDEV_APPROOT"
+            if command -v cygpath >/dev/null 2>&1; then root="$(cygpath -m "$DDEV_APPROOT")"; fi
             cat > "$dst" <<EOF
     // #ddev-generated
     // Installed by ddev-zed only when DDEV_ZED_MCP=true was set during ddev add-on get.
@@ -91,7 +93,7 @@ post_install_actions:
       }
     }
     EOF
-            echo "Installed .zed/$f (Windows: ddev-mcp runs in $winroot)"
+            echo "Installed .zed/$f (Windows: ddev-mcp runs in $root)"
             continue
             ;;
         esac
