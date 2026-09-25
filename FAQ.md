@@ -14,7 +14,7 @@ sudo ufw allow from 172.16.0.0/12 to any port 9003 proto tcp comment 'xdebug fro
 
 `172.16.0.0/12` covers Docker's default bridge ranges. Use `docker network inspect ddev_default` to confirm the subnet on your machine, or `sudo ufw allow 9003/tcp` if you don't need to scope it.
 
-On Windows with Docker Desktop, the container connects through `host.docker.internal`. The first time the listener starts, Windows Defender Firewall prompts to allow Node.js (the debug adapter); click Allow. If the prompt was dismissed, add the rule in an elevated PowerShell:
+On Windows with Docker Desktop, the container connects through `host.docker.internal`. The first time the listener starts, Windows Defender Firewall may prompt to allow Node.js (the debug adapter); allow it on both private and public networks. Whether it prompts depends on the machine: with Docker Desktop's Hyper-V backend, the connection can arrive over loopback, which the firewall doesn't filter. If breakpoints don't hit and the prompt was dismissed or never appeared, add the rule in an elevated PowerShell:
 
 ```powershell
 New-NetFirewallRule -DisplayName "Xdebug from Docker" -Direction Inbound -Protocol TCP -LocalPort 9003 -Action Allow
@@ -131,11 +131,14 @@ For projects opened through WSL, Zed doesn't forward `ddev-mcp` to Claude Agent 
 
 Start a new Claude Agent thread and approve the project server when asked. Verified: the thread then calls `ddev_describe` through `ddev-mcp`. If no approval prompt appears and the tools are missing, pre-approve it in `.claude/settings.local.json` with `{ "enabledMcpjsonServers": ["ddev-mcp"] }`.
 
-## ddev-mcp shows "Context server request timeout" (WSL)
-
-The entry in `.zed/settings.json` runs `npx -y ddev-mcp` directly. Zed for Windows starts MCP servers on Windows even when the project is open through WSL, so `npx` isn't found and Zed reports a timeout after 60 seconds. The add-on writes a `wsl.exe` entry instead when it's installed from inside WSL; a plain `npx` entry means it was installed from elsewhere or the file predates that change. Re-run `DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed` from the WSL shell. Also check that `npx` exists inside WSL: on Ubuntu, `sudo apt install nodejs npm`.
-
 Claude Code has its own shell and may prefer it over the MCP tools. Asking it to "use the ddev-mcp tools instead of the shell" works. One advantage of the server there: it runs outside Claude Code's command sandbox, so it doesn't need a sandbox bypass to reach the Docker socket.
+
+## ddev-mcp shows "Context server request timeout" (Windows)
+
+Zed reports any server that doesn't answer within 60 seconds this way, including one that crashed on start. On Windows the add-on writes an entry adapted to your setup; a plain `npx -y ddev-mcp` entry with no `env` means it was installed elsewhere or the file predates that. Re-run `DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed` (in PowerShell: `$env:DDEV_ZED_MCP = "true"` first) from the same environment you run DDEV in. Causes seen in testing:
+
+- **WSL:** Zed for Windows starts MCP servers on Windows even when the project is open through WSL, so `npx` isn't found. The WSL entry uses `wsl.exe` instead. Also check that `npx` exists inside WSL: on Ubuntu, `sudo apt install nodejs npm`.
+- **Traditional Windows:** `ddev-mcp` reads the project folder from the `PWD` environment variable and, when it's missing, calls the Unix `pwd` command, which `cmd.exe` doesn't have, and exits. Zed started from the Start menu has no `PWD`; started with `ddev zed` it inherits one from Git Bash, which is why the problem can seem to come and go. The Windows entry sets `PWD` to the project root.
 
 ## The add-on skipped one of my files
 

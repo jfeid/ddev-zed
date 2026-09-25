@@ -20,6 +20,8 @@ post_install_actions:
     mkdir -p "${DDEV_APPROOT}/.zed"
     files="tasks.json debug.json"
     if [ "${DDEV_ZED_MCP:-}" = "true" ]; then files="$files settings.json"; fi
+    # JSON-escape a string for the generated settings.json.
+    esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
     for f in $files; do
       src="${DDEV_APPROOT}/.ddev/zed/$f"
       dst="${DDEV_APPROOT}/.zed/$f"
@@ -42,7 +44,6 @@ post_install_actions:
       if [ "$f" = "settings.json" ] && [ -n "${WSL_DISTRO_NAME:-}" ]; then
         # Zed for Windows starts MCP servers on the Windows side, even for WSL projects,
         # where npx and ddev don't exist. Launch ddev-mcp inside this distro via wsl.exe.
-        esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
         distro="$(esc "$WSL_DISTRO_NAME")"
         root="$(esc "$DDEV_APPROOT")"
         cat > "$dst" <<EOF
@@ -64,6 +65,36 @@ post_install_actions:
     EOF
         echo "Installed .zed/$f (WSL: ddev-mcp runs in distro $WSL_DISTRO_NAME via wsl.exe)"
         continue
+      fi
+      if [ "$f" = "settings.json" ]; then
+        case "$(uname -s 2>/dev/null)" in
+          MINGW*|MSYS*|CYGWIN*)
+            # Traditional Windows: ddev-mcp takes its project folder from PWD and, when PWD
+            # is unset (Zed started from the Start menu), crashes calling the Unix pwd command.
+            # Pin PWD to the project root so it starts and runs ddev in the right folder.
+            winroot="$DDEV_APPROOT"
+            if command -v cygpath >/dev/null 2>&1; then winroot="$(cygpath -w "$DDEV_APPROOT")"; fi
+            root="$(esc "$winroot")"
+            cat > "$dst" <<EOF
+    // #ddev-generated
+    // Installed by ddev-zed only when DDEV_ZED_MCP=true was set during ddev add-on get.
+    // Windows: PWD tells ddev-mcp which project to run ddev in. The project path is
+    // fixed at install time; re-run ddev add-on get if you move the project.
+    {
+      "context_servers": {
+        "ddev-mcp": {
+          "source": "custom",
+          "command": "npx",
+          "args": ["-y", "ddev-mcp"],
+          "env": { "PWD": "$root" }
+        }
+      }
+    }
+    EOF
+            echo "Installed .zed/$f (Windows: ddev-mcp runs in $winroot)"
+            continue
+            ;;
+        esac
       fi
       cp "$src" "$dst"
       echo "Installed .zed/$f"

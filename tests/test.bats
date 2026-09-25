@@ -132,6 +132,22 @@ teardown() {
   assert_success
 }
 
+@test "opt-in MCP settings on Windows pin PWD to the project root" {
+  set -eu -o pipefail
+  # Pretend the installer runs under Git Bash: stub uname and cygpath.
+  mkdir -p "${TESTDIR}/winbin"
+  printf '#!/usr/bin/env bash\necho MINGW64_NT-10.0-26100\n' > "${TESTDIR}/winbin/uname"
+  printf '#!/usr/bin/env bash\necho '"'"'C:\\Users\\test\\zedtest-win'"'"'\n' > "${TESTDIR}/winbin/cygpath"
+  chmod +x "${TESTDIR}/winbin/uname" "${TESTDIR}/winbin/cygpath"
+  run env -u WSL_DISTRO_NAME PATH="${TESTDIR}/winbin:${PATH}" DDEV_ZED_MCP=true ddev add-on get "${DIR}"
+  assert_success
+  assert_output --partial 'Windows: ddev-mcp runs in C:\Users\test\zedtest-win'
+  run grep -F '"command": "npx"' "${TESTDIR}/.zed/settings.json"
+  assert_success
+  run grep -F '"env": { "PWD": "C:\\Users\\test\\zedtest-win" }' "${TESTDIR}/.zed/settings.json"
+  assert_success
+}
+
 @test "opt-in MCP settings under WSL launch ddev-mcp through wsl.exe" {
   set -eu -o pipefail
   run env WSL_DISTRO_NAME=TestDistro DDEV_ZED_MCP=true ddev add-on get "${DIR}"

@@ -43,7 +43,10 @@ Canonical copies live in `.ddev/zed/`.
 
 Setting `DDEV_ZED_MCP=true` during install writes `.zed/settings.json` with a `context_servers` entry that runs [`ddev-mcp`](https://www.npmjs.com/package/ddev-mcp) ([source](https://github.com/codingsasi/ddev-mcp)) via `npx -y ddev-mcp`. Nothing is installed at that moment: `npx` downloads the package the first time Zed starts the server, so Node.js 20+ with npm must be available on your `PATH`.
 
-When the add-on is installed from inside WSL, it writes a different command: `wsl.exe -d <distro> --cd <project path> npx -y ddev-mcp`. Zed for Windows starts MCP servers on the Windows side even for projects opened through WSL, where neither `npx` nor `ddev` exists; `wsl.exe` runs the server inside your distro instead. The distro name and project path are filled in at install time, so re-run `ddev add-on get` if you move the project.
+On Windows the installer writes a different entry, with the project path filled in at install time. Re-run `ddev add-on get` if you move the project.
+
+- **Installed from inside WSL:** `wsl.exe -d <distro> --cd <project path> npx -y ddev-mcp`. Zed for Windows starts MCP servers on the Windows side even for projects opened through WSL, where neither `npx` nor `ddev` exists; `wsl.exe` runs the server inside your distro instead.
+- **Installed on Windows itself:** the plain `npx` command plus `"env": { "PWD": "<project path>" }`. `ddev-mcp` takes the project folder from `PWD`. Windows doesn't set it, and without it the server crashes on start (it falls back to the Unix `pwd` command) or, when Zed was started from a shell that does set it, runs `ddev` in whatever folder Zed was launched from.
 
 `ddev-mcp` is a [Model Context Protocol](https://modelcontextprotocol.io/) server that exposes DDEV as tools. Once Zed loads it, the Agent Panel can:
 
@@ -91,16 +94,28 @@ Zed's `keymap.json` is global, so the add-on doesn't touch it. Example:
 
 ## Windows
 
-Tested on Windows 11 with Zed 1.21 and DDEV v1.25.4 (September 2026).
+DDEV's Windows installer offers three modes. The add-on was tested on Windows 11 with Zed 1.21 and DDEV v1.25.4 (September 2026) in two of them:
 
-**WSL2 (recommended by DDEV).** Install and run DDEV inside WSL. Open the project from Zed for Windows with "Open Remote" and pick your WSL distro, or run `ddev zed` from the WSL shell: Zed's installer puts a WSL-aware `zed` wrapper on the Windows `PATH`, which WSL interop exposes. Zed asks you to trust the project on first open. What works:
+| DDEV mode | Tested |
+|---|---|
+| Docker CE inside WSL2 (DDEV's recommendation) | yes |
+| Docker Desktop / Rancher Desktop with WSL2 | no; expected to behave like the mode above, since `ddev` and the project live in the WSL distro either way |
+| Traditional Windows (Docker Desktop, PowerShell or Git Bash) | yes, with Docker Desktop's Hyper-V backend |
+
+**WSL2 modes.** Install and run DDEV inside WSL. Open the project from Zed for Windows with "Open Remote" and pick your WSL distro, or run `ddev zed` from the WSL shell: Zed's installer puts a WSL-aware `zed` wrapper on the Windows `PATH`, which WSL interop exposes. Zed asks you to trust the project on first open. What works:
 
 - `ddev zed` and `ddev zed -n`.
 - Tasks. They run in a WSL shell, so `ddev` is found without any PATH changes.
 - The MCP server, through the `wsl.exe` entry the installer writes under WSL. Zed's built-in agent lists its tools; Claude Agent threads need a project `.mcp.json` over WSL (see [DDEV MCP server](#ddev-mcp-server-optional)).
 - Xdebug, **after one WSL setting**. Out of the box the listener fails with "Connection to TCP DAP timeout", a Zed bug in how it reaches debug adapters inside WSL. Disabling IPv6 in WSL works around it: breakpoints then hit normally. See the [FAQ](FAQ.md#the-debugger-fails-with-connection-to-tcp-dap-timeout-wsl2) for the setting and its trade-off.
 
-**Traditional Windows with Docker Desktop.** DDEV runs the installer and `ddev zed` through Git Bash, so Git for Windows is required. The Xdebug listener starts (verified) and Windows Defender Firewall asks to allow Node.js the first time; click Allow. The installer itself and a full breakpoint round-trip have not been verified on this setup yet.
+**Traditional Windows.** The project lives on a Windows drive and Zed opens it as a normal local folder. DDEV runs the add-on's install script and `ddev zed` through Git Bash, so Git for Windows is required, even if you type commands in PowerShell. What works, including from a project path with non-ASCII characters:
+
+- Install, and the skip message for user-owned files.
+- `ddev zed` and `ddev zed -n`.
+- Tasks. Zed runs them through PowerShell.
+- Xdebug, with no extra setup. Windows Defender Firewall may ask to allow Node.js (the debug adapter) the first time; allow it.
+- The MCP server, through the `PWD` entry the installer writes on Windows, however Zed is started. Tested with Zed's tool list and a Claude Agent tool call.
 
 ## FAQ
 
