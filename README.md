@@ -45,7 +45,7 @@ Setting `DDEV_ZED_MCP=true` during install writes `.zed/settings.json` with a `c
 
 On Windows the installer writes a different entry, depending on where it runs:
 
-- **Inside WSL:** `wsl.exe -d <distro> --cd <project path> npx -y ddev-mcp`. Zed for Windows starts MCP servers on the Windows side even for projects opened through WSL, where neither `npx` nor `ddev` exists; `wsl.exe` runs the server inside your distro instead. The distro name and project path are filled in at install time, so re-run `ddev add-on get` if you move the project.
+- **Inside WSL:** `wsl.exe -d <distro> --cd <project path> npx -y ddev-mcp`. Zed for Windows starts MCP servers on the Windows side even for projects opened through WSL, where neither `npx` nor `ddev` exists; `wsl.exe` runs the server inside your distro instead. The distro name and project path are filled in at install time, so this is the one entry to regenerate with `ddev add-on get` if you move the project (see the [FAQ](FAQ.md#i-moved-or-renamed-the-project)).
 - **On Windows itself:** `cmd /c "set PWD=%CD%&& npx -y ddev-mcp"`. `ddev-mcp` takes the project folder from the `PWD` variable and crashes on start without it. Zed starts the server in the project folder, and `cmd` copies that folder into `PWD`. The file holds no machine-specific path.
 
 On Linux and macOS the plain entry needs nothing extra: Zed starts the server in the project folder through `sh -c`, and the shell sets `PWD` itself.

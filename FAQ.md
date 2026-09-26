@@ -165,4 +165,7 @@ The command looks for `zed`, then `zeditor` (some Linux distro packages), then `
 
 ## I moved or renamed the project
 
-Nothing to do. `$ZED_WORKTREE_ROOT` follows the project. Only a hardcoded absolute path (see above) needs updating.
+Usually nothing to do. The add-on's files don't store the project path: `debug.json` uses `$ZED_WORKTREE_ROOT`, `ddev zed` asks DDEV, and the MCP entry on Linux, macOS and Traditional Windows gets the folder from Zed. Two exceptions:
+
+- **MCP server under WSL.** That entry contains the distro name and project path. Re-run `DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed` from the new location.
+- **Your own absolute path in `debug.json`.** If you replaced `$ZED_WORKTREE_ROOT` with a fixed path (see [Path mapping](#4-path-mapping)), the file is yours now; update the path by hand.
