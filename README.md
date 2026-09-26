@@ -43,10 +43,12 @@ Canonical copies live in `.ddev/zed/`.
 
 Setting `DDEV_ZED_MCP=true` during install writes `.zed/settings.json` with a `context_servers` entry that runs [`ddev-mcp`](https://www.npmjs.com/package/ddev-mcp) ([source](https://github.com/codingsasi/ddev-mcp)) via `npx -y ddev-mcp`. Nothing is installed at that moment: `npx` downloads the package the first time Zed starts the server, so Node.js 20+ with npm must be available on your `PATH`.
 
-On Windows the installer writes a different entry, with the project path filled in at install time. Re-run `ddev add-on get` if you move the project.
+On Windows the installer writes a different entry, depending on where it runs:
 
-- **Installed from inside WSL:** `wsl.exe -d <distro> --cd <project path> npx -y ddev-mcp`. Zed for Windows starts MCP servers on the Windows side even for projects opened through WSL, where neither `npx` nor `ddev` exists; `wsl.exe` runs the server inside your distro instead.
-- **Installed on Windows itself:** the plain `npx` command plus `"env": { "PWD": "<project path>" }`. `ddev-mcp` takes the project folder from `PWD`. Windows doesn't set it, and without it the server crashes on start (it falls back to the Unix `pwd` command) or, when Zed was started from a shell that does set it, runs `ddev` in whatever folder Zed was launched from.
+- **Inside WSL:** `wsl.exe -d <distro> --cd <project path> npx -y ddev-mcp`. Zed for Windows starts MCP servers on the Windows side even for projects opened through WSL, where neither `npx` nor `ddev` exists; `wsl.exe` runs the server inside your distro instead. The distro name and project path are filled in at install time, so re-run `ddev add-on get` if you move the project.
+- **On Windows itself:** `cmd /c "set PWD=%CD%&& npx -y ddev-mcp"`. `ddev-mcp` takes the project folder from the `PWD` variable and crashes on start without it. Zed starts the server in the project folder, and `cmd` copies that folder into `PWD`. The file holds no machine-specific path.
+
+On Linux and macOS the plain entry needs nothing extra: Zed starts the server in the project folder through `sh -c`, and the shell sets `PWD` itself.
 
 `ddev-mcp` is a [Model Context Protocol](https://modelcontextprotocol.io/) server that exposes DDEV as tools. Once Zed loads it, the Agent Panel can:
 
@@ -115,7 +117,7 @@ DDEV's Windows installer offers three modes. The add-on was tested on Windows 11
 - `ddev zed` and `ddev zed -n`.
 - Tasks. Zed runs them through PowerShell.
 - Xdebug, with no extra setup. Windows Defender Firewall may ask to allow Node.js (the debug adapter) the first time; allow it.
-- The MCP server, through the `PWD` entry the installer writes on Windows, however Zed is started. Tested with Zed's tool list and a Claude Agent tool call.
+- The MCP server, through the `cmd` entry the installer writes on Windows, however Zed is started. Tested with Zed's tool list and a Claude Agent tool call.
 
 ## FAQ
 

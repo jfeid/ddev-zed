@@ -132,20 +132,22 @@ teardown() {
   assert_success
 }
 
-@test "opt-in MCP settings on Windows pin PWD to the project root" {
+@test "opt-in MCP settings on Windows set PWD through cmd" {
   set -eu -o pipefail
-  # Pretend the installer runs under Git Bash: stub uname and cygpath.
+  # Pretend the installer runs under Git Bash.
   mkdir -p "${TESTDIR}/winbin"
   printf '#!/usr/bin/env bash\necho MINGW64_NT-10.0-26100\n' > "${TESTDIR}/winbin/uname"
-  printf '#!/usr/bin/env bash\necho C:/Users/test/zedtest-win\n' > "${TESTDIR}/winbin/cygpath"
-  chmod +x "${TESTDIR}/winbin/uname" "${TESTDIR}/winbin/cygpath"
+  chmod +x "${TESTDIR}/winbin/uname"
   run env -u WSL_DISTRO_NAME PATH="${TESTDIR}/winbin:${PATH}" DDEV_ZED_MCP=true ddev add-on get "${DIR}"
   assert_success
-  assert_output --partial 'Windows: ddev-mcp runs in C:/Users/test/zedtest-win'
-  run grep -F '"command": "npx"' "${TESTDIR}/.zed/settings.json"
+  assert_output --partial 'Windows: ddev-mcp gets PWD from cmd'
+  run grep -F '"command": "cmd"' "${TESTDIR}/.zed/settings.json"
   assert_success
-  run grep -F '"env": { "PWD": "C:/Users/test/zedtest-win" }' "${TESTDIR}/.zed/settings.json"
+  run grep -F '"args": ["/c", "set PWD=%CD%&& npx -y ddev-mcp"]' "${TESTDIR}/.zed/settings.json"
   assert_success
+  # No machine-specific path in the file.
+  run grep -F "${TESTDIR}" "${TESTDIR}/.zed/settings.json"
+  assert_failure
 }
 
 @test "opt-in MCP settings under WSL launch ddev-mcp through wsl.exe" {

@@ -135,10 +135,10 @@ Claude Code has its own shell and may prefer it over the MCP tools. Asking it to
 
 ## ddev-mcp shows "Context server request timeout" (Windows)
 
-Zed reports any server that doesn't answer within 60 seconds this way, including one that crashed on start. On Windows the add-on writes an entry adapted to your setup; a plain `npx -y ddev-mcp` entry with no `env` means it was installed elsewhere or the file predates that. Re-run `DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed` (in PowerShell: `$env:DDEV_ZED_MCP = "true"` first) from the same environment you run DDEV in. Causes seen in testing:
+Zed reports any server that doesn't answer within 60 seconds this way, including one that crashed on start. On Windows the add-on writes an entry adapted to your setup; a plain `npx -y ddev-mcp` command means it was installed elsewhere or the file predates that. Re-run `DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed` (in PowerShell: `$env:DDEV_ZED_MCP = "true"` first) from the same environment you run DDEV in. Causes seen in testing:
 
 - **WSL:** Zed for Windows starts MCP servers on Windows even when the project is open through WSL, so `npx` isn't found. The WSL entry uses `wsl.exe` instead. Also check that `npx` exists inside WSL: on Ubuntu, `sudo apt install nodejs npm`.
-- **Traditional Windows:** `ddev-mcp` reads the project folder from the `PWD` environment variable and, when it's missing, calls the Unix `pwd` command, which `cmd.exe` doesn't have, and exits. Zed started from the Start menu has no `PWD`; started with `ddev zed` it inherits one from Git Bash, which is why the problem can seem to come and go. The Windows entry sets `PWD` to the project root.
+- **Traditional Windows:** `ddev-mcp` reads the project folder from the `PWD` environment variable and, when it's missing, calls the Unix `pwd` command, which `cmd.exe` doesn't have, and exits. Zed started from the Start menu has no `PWD`; started with `ddev zed` it inherits one from Git Bash, which is why the problem can seem to come and go. The Windows entry runs the server through `cmd`, which sets `PWD` to the folder Zed starts it in, the project root. That relies on Zed starting MCP servers in the project folder, which recent versions do (tested with 1.21).
 
 ## The add-on skipped one of my files
 
