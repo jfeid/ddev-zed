@@ -108,6 +108,8 @@ teardown() {
   assert_output --partial 'Not found in your .zed/tasks.json: "ddev: stop", "ddev: restart"'
   refute_output --partial '"ddev: start"'
   assert_output --partial 'Not found in your .zed/settings.json: "ddev-mcp" context server'
+  # ...followed by the entry to paste
+  assert_output --partial '"ddev-mcp": {'
 }
 
 @test "ddev zed opens the project root" {
@@ -130,6 +132,15 @@ teardown() {
   assert_file_exist "${TESTDIR}/.zed/settings.json"
   run grep -F '"command": "npx"' "${TESTDIR}/.zed/settings.json"
   assert_success
+  # A later install without the flag keeps MCP on and refreshes the generated file.
+  sed -i 's/"ddev-mcp"\]/"ddev-mcp", "--stale"]/' "${TESTDIR}/.zed/settings.json"
+  run grep -c -- '--stale' "${TESTDIR}/.zed/settings.json"
+  assert_output "1"
+  run env -u WSL_DISTRO_NAME -u DDEV_ZED_MCP ddev add-on get "${DIR}"
+  assert_success
+  assert_file_exist "${TESTDIR}/.zed/settings.json"
+  run grep -F -- '--stale' "${TESTDIR}/.zed/settings.json"
+  assert_failure
 }
 
 @test "opt-in MCP settings on Windows set PWD through cmd" {
@@ -148,6 +159,12 @@ teardown() {
   # No machine-specific path in the file.
   run grep -F "${TESTDIR}" "${TESTDIR}/.zed/settings.json"
   assert_failure
+  # A user-owned settings.json gets the Windows entry printed, not the generic template.
+  echo '{ "context_servers": {} }' > "${TESTDIR}/.zed/settings.json"
+  run env -u WSL_DISTRO_NAME PATH="${TESTDIR}/winbin:${PATH}" DDEV_ZED_MCP=true ddev add-on get "${DIR}"
+  assert_success
+  assert_output --partial 'The entry for this platform:'
+  assert_output --partial '"command": "cmd"'
 }
 
 @test "opt-in MCP settings under WSL launch ddev-mcp through wsl.exe" {

@@ -19,36 +19,36 @@ post_install_actions:
     #ddev-description:Install Zed tasks and debug config into .zed/
     mkdir -p "${DDEV_APPROOT}/.zed"
     files="tasks.json debug.json"
-    if [ "${DDEV_ZED_MCP:-}" = "true" ]; then files="$files settings.json"; fi
-    # JSON-escape a string for the generated settings.json.
+    # MCP is opt-in. A settings.json the add-on generated earlier counts as opted in, so
+    # reinstalls and updates refresh it without the flag. Delete the file to turn MCP off.
+    mcp_file="${DDEV_APPROOT}/.zed/settings.json"
+    if [ "${DDEV_ZED_MCP:-}" = "true" ] || { [ -f "$mcp_file" ] && grep -q '#ddev-generated' "$mcp_file"; }; then
+      files="$files settings.json"
+    fi
+    # Which ddev-mcp entry this platform needs (see README, "DDEV MCP server").
+    if [ -n "${WSL_DISTRO_NAME:-}" ]; then
+      mcp_platform=wsl
+    else
+      case "$(uname -s 2>/dev/null)" in
+        MINGW*|MSYS*|CYGWIN*) mcp_platform=windows ;;
+        *) mcp_platform=unix ;;
+      esac
+    fi
+    # JSON-escape a string. Only the WSL entry uses it, and that runs in Linux bash: on
+    # Windows, DDEV hands this script to Git Bash in a way that halves doubled backslashes.
     esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
-    for f in $files; do
-      src="${DDEV_APPROOT}/.ddev/zed/$f"
-      dst="${DDEV_APPROOT}/.zed/$f"
-      if [ -f "$dst" ] && ! grep -q '#ddev-generated' "$dst"; then
-        echo "Skipped .zed/$f: it exists and is user-owned. Merge manually from .ddev/zed/$f"
-        # Read-only hint: list template entries the user's file doesn't have yet.
-        missing=""
-        if [ "$f" = "settings.json" ]; then
-          grep -q '"ddev-mcp"' "$dst" || missing='"ddev-mcp" context server'
-        else
-          while IFS= read -r label; do
-            grep -qF "\"$label\"" "$dst" || missing="${missing:+$missing, }\"$label\""
-          done < <(grep -o '"label": *"[^"]*"' "$src" | sed 's/^"label": *"//; s/"$//')
-        fi
-        if [ -n "$missing" ]; then
-          echo "  Not found in your .zed/$f: $missing"
-        fi
-        continue
-      fi
-      if [ "$f" = "settings.json" ] && [ -n "${WSL_DISTRO_NAME:-}" ]; then
-        # Zed for Windows starts MCP servers on the Windows side, even for WSL projects,
-        # where npx and ddev don't exist. Launch ddev-mcp inside this distro via wsl.exe.
-        distro="$(esc "$WSL_DISTRO_NAME")"
-        root="$(esc "$DDEV_APPROOT")"
-        cat > "$dst" <<EOF
+    # Print the settings.json for this platform.
+    mcp_settings() {
+      case "$mcp_platform" in
+        wsl)
+          # Zed for Windows starts MCP servers on the Windows side, even for WSL projects,
+          # where npx and ddev don't exist. Launch ddev-mcp inside this distro via wsl.exe.
+          distro="$(esc "$WSL_DISTRO_NAME")"
+          root="$(esc "$DDEV_APPROOT")"
+          cat <<EOF
     // #ddev-generated
-    // Installed by ddev-zed only when DDEV_ZED_MCP=true was set during ddev add-on get.
+    // Installed by ddev-zed when DDEV_ZED_MCP=true was set during ddev add-on get; later
+    // installs refresh it. Delete this file or run ddev add-on remove zed to turn it off.
     // WSL: Zed for Windows starts MCP servers on Windows, so this runs ddev-mcp inside
     // the WSL distro through wsl.exe. The project path is fixed at install time;
     // re-run ddev add-on get if you move the project.
@@ -63,19 +63,16 @@ post_install_actions:
       }
     }
     EOF
-        echo "Installed .zed/$f (WSL: ddev-mcp runs in distro $WSL_DISTRO_NAME via wsl.exe)"
-        continue
-      fi
-      if [ "$f" = "settings.json" ]; then
-        case "$(uname -s 2>/dev/null)" in
-          MINGW*|MSYS*|CYGWIN*)
-            # Traditional Windows: ddev-mcp takes its project folder from the PWD variable
-            # and, without it, crashes calling the Unix pwd command. Zed starts local MCP
-            # servers in the project folder but through PowerShell, which doesn't set PWD,
-            # so let cmd set it from the working directory. No path is stored in the file.
-            cat > "$dst" <<'EOF'
+          ;;
+        windows)
+          # ddev-mcp takes its project folder from the PWD variable and, without it,
+          # crashes calling the Unix pwd command. Zed starts local MCP servers in the
+          # project folder but through PowerShell, which doesn't set PWD, so let cmd set
+          # it from the working directory. No path is stored in the file.
+          cat <<'EOF'
     // #ddev-generated
-    // Installed by ddev-zed only when DDEV_ZED_MCP=true was set during ddev add-on get.
+    // Installed by ddev-zed when DDEV_ZED_MCP=true was set during ddev add-on get; later
+    // installs refresh it. Delete this file or run ddev add-on remove zed to turn it off.
     // Windows: cmd sets PWD to the project folder Zed starts the server in; ddev-mcp
     // needs it to find the project.
     {
@@ -89,10 +86,43 @@ post_install_actions:
       }
     }
     EOF
-            echo "Installed .zed/$f (Windows: ddev-mcp gets PWD from cmd)"
-            continue
-            ;;
+          ;;
+        *)
+          cat "${DDEV_APPROOT}/.ddev/zed/settings.json"
+          ;;
+      esac
+    }
+    for f in $files; do
+      src="${DDEV_APPROOT}/.ddev/zed/$f"
+      dst="${DDEV_APPROOT}/.zed/$f"
+      if [ -f "$dst" ] && ! grep -q '#ddev-generated' "$dst"; then
+        # Read-only hint: list template entries the user's file doesn't have yet.
+        if [ "$f" = "settings.json" ]; then
+          echo "Skipped .zed/$f: it exists and is user-owned."
+          if ! grep -q '"ddev-mcp"' "$dst"; then
+            echo "  Not found in your .zed/$f: \"ddev-mcp\" context server. The entry for this platform:"
+            mcp_settings | grep -v '^//' | sed 's/^/    /'
+          fi
+          continue
+        fi
+        echo "Skipped .zed/$f: it exists and is user-owned. Merge manually from .ddev/zed/$f"
+        missing=""
+        while IFS= read -r label; do
+          grep -qF "\"$label\"" "$dst" || missing="${missing:+$missing, }\"$label\""
+        done < <(grep -o '"label": *"[^"]*"' "$src" | sed 's/^"label": *"//; s/"$//')
+        if [ -n "$missing" ]; then
+          echo "  Not found in your .zed/$f: $missing"
+        fi
+        continue
+      fi
+      if [ "$f" = "settings.json" ]; then
+        mcp_settings > "$dst"
+        case "$mcp_platform" in
+          wsl) echo "Installed .zed/$f (WSL: ddev-mcp runs in distro $WSL_DISTRO_NAME via wsl.exe)" ;;
+          windows) echo "Installed .zed/$f (Windows: ddev-mcp gets PWD from cmd)" ;;
+          *) echo "Installed .zed/$f" ;;
         esac
+        continue
       fi
       cp "$src" "$dst"
       echo "Installed .zed/$f"

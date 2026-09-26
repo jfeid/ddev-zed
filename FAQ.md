@@ -135,14 +135,14 @@ Claude Code has its own shell and may prefer it over the MCP tools. Asking it to
 
 ## ddev-mcp shows "Context server request timeout" (Windows)
 
-Zed reports any server that doesn't answer within 60 seconds this way, including one that crashed on start. On Windows the add-on writes an entry adapted to your setup; a plain `npx -y ddev-mcp` command means it was installed elsewhere or the file predates that. Re-run `DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed` (in PowerShell: `$env:DDEV_ZED_MCP = "true"` first) from the same environment you run DDEV in. Causes seen in testing:
+Zed reports any server that doesn't answer within 60 seconds this way, including one that crashed on start. On Windows the add-on writes an entry adapted to your setup; a plain `npx -y ddev-mcp` command means it was installed elsewhere or the file predates that. Re-run `ddev add-on get jfeid/ddev-zed` from the same environment you run DDEV in: it rewrites a generated `settings.json` for your platform, no flag needed. If the file is your own, the installer prints the entry to paste. Causes seen in testing:
 
 - **WSL:** Zed for Windows starts MCP servers on Windows even when the project is open through WSL, so `npx` isn't found. The WSL entry uses `wsl.exe` instead. Also check that `npx` exists inside WSL: on Ubuntu, `sudo apt install nodejs npm`.
 - **Traditional Windows:** `ddev-mcp` reads the project folder from the `PWD` environment variable and, when it's missing, calls the Unix `pwd` command, which `cmd.exe` doesn't have, and exits. Zed started from the Start menu has no `PWD`; started with `ddev zed` it inherits one from Git Bash, which is why the problem can seem to come and go. The Windows entry runs the server through `cmd`, which sets `PWD` to the folder Zed starts it in, the project root. That relies on Zed starting MCP servers in the project folder, which recent versions do (tested with 1.21).
 
 ## The add-on skipped one of my files
 
-Any file in `.zed/` without the `#ddev-generated` marker is yours. The add-on won't overwrite or remove it. The canonical templates are always in `.ddev/zed/`; open the matching file there and copy the entries you want into your own file.
+Any file in `.zed/` without the `#ddev-generated` marker is yours. The add-on won't overwrite or remove it. The canonical templates are always in `.ddev/zed/`; open the matching file there and copy the entries you want into your own file. The exception is `settings.json`: its template is the Linux and macOS form of the `ddev-mcp` entry, so for that file the installer prints the entry for your platform instead. Copy that one.
 
 The skip message tells you what's missing, for example:
 
@@ -167,5 +167,5 @@ The command looks for `zed`, then `zeditor` (some Linux distro packages), then `
 
 Usually nothing to do. The add-on's files don't store the project path: `debug.json` uses `$ZED_WORKTREE_ROOT`, `ddev zed` asks DDEV, and the MCP entry on Linux, macOS and Traditional Windows gets the folder from Zed. Two exceptions:
 
-- **MCP server under WSL.** That entry contains the distro name and project path. Re-run `DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed` from the new location.
+- **MCP server under WSL.** That entry contains the distro name and project path. Re-run `ddev add-on get jfeid/ddev-zed` from the new location; it refreshes the generated file. If the file is your own, update the `--cd` path in it by hand.
 - **Your own absolute path in `debug.json`.** If you replaced `$ZED_WORKTREE_ROOT` with a fixed path (see [Path mapping](#4-path-mapping)), the file is yours now; update the path by hand.

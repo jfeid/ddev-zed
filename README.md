@@ -35,7 +35,7 @@ DDEV_ZED_MCP=true ddev add-on get jfeid/ddev-zed
 | `.zed/tasks.json` | start, stop, restart, describe, launch, mailpit, ssh, logs, xdebug toggle/diagnose, composer install, snapshot |
 | `.zed/debug.json` | "DDEV: Listen for Xdebug" on port 9003, `/var/www/html` mapped to `$ZED_WORKTREE_ROOT` |
 | `.ddev/commands/host/zed` | `ddev zed` opens the project in Zed; extra arguments are passed through, e.g. `ddev zed -n` for a new window |
-| `.zed/settings.json` | optional: registers the [`ddev-mcp`](https://www.npmjs.com/package/ddev-mcp) context server for the Agent Panel (only with `DDEV_ZED_MCP=true`) |
+| `.zed/settings.json` | optional: registers the [`ddev-mcp`](https://www.npmjs.com/package/ddev-mcp) context server for the Agent Panel (opt in with `DDEV_ZED_MCP=true`; stays on for later installs until you delete the file) |
 
 Canonical copies live in `.ddev/zed/`.
 
@@ -63,7 +63,9 @@ This works with Zed's built-in agent and with external agents such as Claude Cod
 
 Tool calls are subject to the Agent Panel's normal confirmation flow. `ddev-mcp` also blocks commands it classifies as dangerous (for example destructive Platform.sh or database operations) unless `ALLOW_DANGEROUS_COMMANDS=true` is set in the server's `env` block in `.zed/settings.json`.
 
-If `.zed/settings.json` already exists and has no `#ddev-generated` marker, the add-on leaves it alone and prints a message. Copy the `context_servers` block from `.ddev/zed/settings.json` into your file manually. If you skip the opt-in, `.zed/settings.json` is not created and the Agent Panel is unaffected.
+MCP stays on once enabled: later `ddev add-on get` or `ddev add-on update` runs refresh the generated `.zed/settings.json` even without `DDEV_ZED_MCP=true`, so fixes to the entry reach you. To turn it off, delete `.zed/settings.json` or remove the add-on. If you never opt in, the file isn't created and the Agent Panel is unaffected.
+
+If `.zed/settings.json` already exists and has no `#ddev-generated` marker, the add-on leaves it alone. When your file has no `ddev-mcp` entry yet, the installer prints the one for your platform; paste its `"ddev-mcp"` block into your `context_servers`. Don't copy it from `.ddev/zed/settings.json`: that template is the Linux and macOS form, which doesn't start on Windows or under WSL.
 
 ## Ownership
 

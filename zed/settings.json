@@ -1,5 +1,6 @@
 // #ddev-generated
-// Installed by ddev-zed only when DDEV_ZED_MCP=true was set during `ddev add-on get`.
+// Installed by ddev-zed when DDEV_ZED_MCP=true was set during `ddev add-on get`; later
+// installs refresh it. Delete this file or run `ddev add-on remove zed` to turn it off.
 {
   "context_servers": {
     "ddev-mcp": {
