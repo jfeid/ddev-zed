@@ -65,11 +65,11 @@ Tool calls are subject to the Agent Panel's normal confirmation flow. `ddev-mcp`
 
 MCP stays on once enabled: later `ddev add-on get` or `ddev add-on update` runs refresh the generated `.zed/settings.json` even without `DDEV_ZED_MCP=true`, so fixes to the entry reach you. To turn it off, delete `.zed/settings.json` or remove the add-on. If you never opt in, the file isn't created and the Agent Panel is unaffected.
 
-If `.zed/settings.json` already exists and has no `#ddev-generated` marker, the add-on leaves it alone. When your file has no `ddev-mcp` entry yet, the installer prints the one for your platform; paste its `"ddev-mcp"` block into your `context_servers`. Don't copy it from `.ddev/zed/settings.json`: that template is the Linux and macOS form, which doesn't start on Windows or under WSL.
+If `.zed/settings.json` already exists and has no `#ddev-generated` marker, the add-on leaves it alone and checks your `ddev-mcp` entry. When the entry is missing, or uses a different command than your platform needs, the installer prints the right one; paste its `"ddev-mcp"` block into your `context_servers`. Don't copy it from `.ddev/zed/settings.json`: that template is the Linux and macOS form, which doesn't start on Windows or under WSL.
 
 ## Ownership
 
-Files containing `#ddev-generated` belong to the add-on and are updated on reinstall. Delete that line to take ownership; the add-on will then skip the file on install and keep it on removal. When it skips a file, it lists the template entries your file doesn't have (task and debug labels, or the `ddev-mcp` server) so you can merge them by hand from `.ddev/zed/`.
+Files containing `#ddev-generated` belong to the add-on and are updated on reinstall. Delete that line to take ownership; the add-on will then skip the file on install and keep it on removal. When it skips a file, it prints the entries your file is missing, ready to paste (see the [FAQ](FAQ.md#the-add-on-skipped-one-of-my-files)).
 
 ## Debugging
 

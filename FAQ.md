@@ -142,16 +142,19 @@ Zed reports any server that doesn't answer within 60 seconds this way, including
 
 ## The add-on skipped one of my files
 
-Any file in `.zed/` without the `#ddev-generated` marker is yours. The add-on won't overwrite or remove it. The canonical templates are always in `.ddev/zed/`; open the matching file there and copy the entries you want into your own file. The exception is `settings.json`: its template is the Linux and macOS form of the `ddev-mcp` entry, so for that file the installer prints the entry for your platform instead. Copy that one.
-
-The skip message tells you what's missing, for example:
+Any file in `.zed/` without the `#ddev-generated` marker is yours. The add-on won't overwrite or remove it. Instead, the skip message prints what your file is missing, ready to paste into it:
 
 ```
-Skipped .zed/tasks.json: it exists and is user-owned. Merge manually from .ddev/zed/tasks.json
-  Not found in your .zed/tasks.json: "ddev: snapshot", "ddev: xdebug diagnose"
+Skipped .zed/tasks.json: it exists and is user-owned.
+  Not found in your .zed/tasks.json: "ddev: launch". Entries to add to its top-level array:
+      { "label": "ddev: launch", "command": "ddev", "args": ["launch"], "cwd": "$ZED_WORKTREE_ROOT", "reveal": "never", "hide": "always" },
 ```
 
-The check is a plain text search for each template label, so a task you renamed will show up as missing. The add-on never writes into a user-owned file, even additively: Zed's files are JSONC with comments, and there is no portable way to merge into them without losing those comments or breaking `ddev add-on remove`.
+For `tasks.json` and `debug.json`, paste the printed entries into the file's top-level `[ ... ]` array, adding a comma between entries where needed. The check is a plain text search for each template label, so a task you renamed will show up as missing; skip those.
+
+For `settings.json`, the message is one of three: the `ddev-mcp` entry is missing, your `ddev-mcp` entry uses a different command than your platform needs, or it already has the right entry. In the first two cases it prints the entry for your platform; paste its `"ddev-mcp"` block into your `context_servers`. Use that rather than `.ddev/zed/settings.json`, which is the Linux and macOS form.
+
+The add-on never writes into a user-owned file, even additively: Zed's files are JSONC with comments, and there is no portable way to merge into them without losing those comments or breaking `ddev add-on remove`.
 
 To hand a file back to the add-on, delete it and re-run `ddev add-on get jfeid/ddev-zed`.
 

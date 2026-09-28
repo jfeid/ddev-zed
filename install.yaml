@@ -92,26 +92,45 @@ post_install_actions:
           ;;
       esac
     }
+    # Print the top-level entry of JSON file $2 whose text contains $1, by tracking brace
+    # depth (the templates hold no braces inside strings). No backslashes: see esc() above.
+    template_entry() {
+      awk -v needle="$1" '
+        { d0 = d; line = $0; o = gsub(/[{]/, "", line); line = $0; c = gsub(/[}]/, "", line); d += o - c
+          if (d0 > 0 || o > 0) buf = buf $0 RS
+          if (d == 0 && buf != "") { if (index(buf, needle)) printf "%s", buf; buf = "" } }
+      ' "$2"
+    }
     for f in $files; do
       src="${DDEV_APPROOT}/.ddev/zed/$f"
       dst="${DDEV_APPROOT}/.zed/$f"
       if [ -f "$dst" ] && ! grep -q '#ddev-generated' "$dst"; then
-        # Read-only hint: list template entries the user's file doesn't have yet.
+        # Read-only hint: print what the user's file is missing, ready to paste.
+        echo "Skipped .zed/$f: it exists and is user-owned."
         if [ "$f" = "settings.json" ]; then
-          echo "Skipped .zed/$f: it exists and is user-owned."
+          mcp_command="$(mcp_settings | grep '"command"' | sed 's/^ *//; s/,$//')"
           if ! grep -q '"ddev-mcp"' "$dst"; then
-            echo "  Not found in your .zed/$f: \"ddev-mcp\" context server. The entry for this platform:"
+            echo '  Not found in your .zed/settings.json: "ddev-mcp" context server. The entry for this platform:'
             mcp_settings | grep -v '^//' | sed 's/^/    /'
+          elif ! grep -qF "$mcp_command" "$dst"; then
+            echo "  Your \"ddev-mcp\" entry doesn't use $mcp_command, which this platform needs. The entry for this platform:"
+            mcp_settings | grep -v '^//' | sed 's/^/    /'
+          else
+            echo '  It already has the "ddev-mcp" entry for this platform.'
           fi
           continue
         fi
-        echo "Skipped .zed/$f: it exists and is user-owned. Merge manually from .ddev/zed/$f"
         missing=""
         while IFS= read -r label; do
           grep -qF "\"$label\"" "$dst" || missing="${missing:+$missing, }\"$label\""
         done < <(grep -o '"label": *"[^"]*"' "$src" | sed 's/^"label": *"//; s/"$//')
         if [ -n "$missing" ]; then
-          echo "  Not found in your .zed/$f: $missing"
+          echo "  Not found in your .zed/$f: $missing. Entries to add to its top-level array:"
+          while IFS= read -r label; do
+            grep -qF "\"$label\"" "$dst" || template_entry "\"label\": \"$label\"" "$src" | sed 's/^/    /'
+          done < <(grep -o '"label": *"[^"]*"' "$src" | sed 's/^"label": *"//; s/"$//')
+        else
+          echo "  It already has every entry from the add-on's $f."
         fi
         continue
       fi

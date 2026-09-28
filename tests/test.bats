@@ -98,18 +98,31 @@ teardown() {
   assert_file_not_exist "${TESTDIR}/.zed/debug.json"
 }
 
-@test "skip message lists entries missing from user-owned files" {
+@test "skip message prints entries missing from user-owned files" {
   set -eu -o pipefail
   mkdir -p "${TESTDIR}/.zed"
   echo '[{ "label": "ddev: start", "command": "ddev", "args": ["start"] }]' > "${TESTDIR}/.zed/tasks.json"
+  echo '[]' > "${TESTDIR}/.zed/debug.json"
   echo '{ "context_servers": {} }' > "${TESTDIR}/.zed/settings.json"
-  DDEV_ZED_MCP=true run ddev add-on get "${DIR}"
+  run env -u WSL_DISTRO_NAME DDEV_ZED_MCP=true ddev add-on get "${DIR}"
   assert_success
   assert_output --partial 'Not found in your .zed/tasks.json: "ddev: stop", "ddev: restart"'
   refute_output --partial '"ddev: start"'
+  # Missing entries are printed in full, ready to paste.
+  assert_output --partial '{ "label": "ddev: stop", "command": "ddev", "args": ["stop"]'
+  assert_output --partial 'Not found in your .zed/debug.json: "DDEV: Listen for Xdebug"'
+  assert_output --partial '"pathMappings": {'
   assert_output --partial 'Not found in your .zed/settings.json: "ddev-mcp" context server'
-  # ...followed by the entry to paste
   assert_output --partial '"ddev-mcp": {'
+  # Files that already have everything say so.
+  cp "${TESTDIR}/.ddev/zed/debug.json" "${TESTDIR}/.zed/debug.json"
+  sed -i '/#ddev-generated/d' "${TESTDIR}/.zed/debug.json"
+  cp "${TESTDIR}/.ddev/zed/settings.json" "${TESTDIR}/.zed/settings.json"
+  sed -i '/#ddev-generated/d' "${TESTDIR}/.zed/settings.json"
+  run env -u WSL_DISTRO_NAME DDEV_ZED_MCP=true ddev add-on get "${DIR}"
+  assert_success
+  assert_output --partial "It already has every entry from the add-on's debug.json."
+  assert_output --partial 'It already has the "ddev-mcp" entry for this platform.'
 }
 
 @test "ddev zed opens the project root" {
@@ -165,6 +178,12 @@ teardown() {
   assert_success
   assert_output --partial 'The entry for this platform:'
   assert_output --partial '"command": "cmd"'
+  # A user-owned ddev-mcp entry in the Linux form is flagged as wrong for Windows.
+  cp "${TESTDIR}/.ddev/zed/settings.json" "${TESTDIR}/.zed/settings.json"
+  sed -i '/#ddev-generated/d' "${TESTDIR}/.zed/settings.json"
+  run env -u WSL_DISTRO_NAME PATH="${TESTDIR}/winbin:${PATH}" DDEV_ZED_MCP=true ddev add-on get "${DIR}"
+  assert_success
+  assert_output --partial 'entry doesn'"'"'t use "command": "cmd", which this platform needs'
 }
 
 @test "opt-in MCP settings under WSL launch ddev-mcp through wsl.exe" {
